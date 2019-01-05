@@ -27,7 +27,7 @@ public class AgentVisionManager : MonoBehaviour {
         Planet.instance.currentRenderMode = RenderMode.Free;
 
         foreach (Agent agent in Base.instance.agents) {
-            agent.gameObject.GetComponent<SpriteRenderer>().enabled = true;
+            agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = true;
         }
 
         Planet.instance.planetVisualInfo.renderAllTiles();
@@ -40,7 +40,7 @@ public class AgentVisionManager : MonoBehaviour {
 
             foreach (MovingAgent agent in Base.instance.agents) {
                 if (agent != agentToAttach)
-                    agent.gameObject.GetComponent<SpriteRenderer>().enabled = false;
+                    agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = false;
             }
             Planet.instance.currentAgentToRender = agentToAttach;
         }

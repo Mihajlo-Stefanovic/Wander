@@ -15,8 +15,7 @@ public class PlanetGraphInfo {
         for (int x = 0; x < Planet.instance.NumOfPlanetTilesX; x++) {
             for (int y = 0; y < Planet.instance.NumOfPlanetTilesY; y++) {
                 //maybe determine TileType here
-                Tile newTile = new Tile(x, y, (TileType)UnityEngine.Random.
-                    Range(0, TileType.GetNames(typeof(TileType)).Length));
+                Tile newTile = new Tile(x, y, UnityEngine.Random.Range(0f,1f));
                 connectWithGraph(newTile);
             }
         }

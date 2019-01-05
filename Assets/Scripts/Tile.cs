@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-public enum TileType {
-    Dirt, Water, Stone,
-}
+
 public class Tile {
-    public TileType tileType;
+    public float wetness;
 
     public readonly Vector2 coorcinates;
 
@@ -14,10 +12,10 @@ public class Tile {
 
     public List<Tile> neighbours;
 
-    public Tile(int x, int y, TileType tileType) {
+    public Tile(int x, int y, float wetness) {
         name = "Tile-" + x + "-" + y;
         coorcinates = new Vector2(x, y);
-        this.tileType = tileType;
+        this.wetness = wetness;
 
         neighbours = new List<Tile>();
     }
