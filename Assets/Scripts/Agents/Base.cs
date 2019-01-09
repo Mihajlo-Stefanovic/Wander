@@ -4,7 +4,7 @@ using UnityEngine;
 public class Base : Agent {
     public static Base instance;
     [HideInInspector]
-    public Vector2 position;
+    public Vector3Int position;
 
     public List<MovingAgent> agents;
 
@@ -16,7 +16,7 @@ public class Base : Agent {
             Destroy(this);
         }
 
-        agentMemory = new List<Tile>();
+        agentMemory = new List<TileMemory>();
     }
 
     void Start() {
@@ -27,11 +27,9 @@ public class Base : Agent {
     }
 
     void setInitialPosition() { //uses real world matrix positions, to improve maybe
-        transform.position = new Vector3(Planet.instance.NumOfPlanetTilesX / 2,
-            transform.position.y, Planet.instance.NumOfPlanetTilesY / 2);
-
-        position = new Vector2(Planet.instance.NumOfPlanetTilesX / 2, Planet.instance.NumOfPlanetTilesY / 2);
-        currentTile = Planet.instance.planetGraphInfo.getTileWithPos(position);
+        transform.position = Planet.instance.planetLandingPos;
+        currentTile = Planet.instance.planetGraphInfo.allPlanetTiles[0];
+        position = Planet.instance.planetGraphInfo.allPlanetTiles[0].virtualCoordinates;
     }
 
 }

@@ -5,6 +5,6 @@ using UnityEngine;
 public abstract class Agent : MonoBehaviour {
     public Tile currentTile;
 
-    public List<Tile> agentMemory;
+    public List<TileMemory> agentMemory;
     public List<Tile> currentVision;
 }

@@ -1,6 +1,5 @@
 ﻿#undef AGENTMEMORY
 #undef CURRENTVISION
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,11 +8,14 @@ public class MovingAgent : Agent {
     public int visionDistance = 1;
     public float paceOfMoving = 1f;
 
-    public Vector2 currentAgentToBasePosition;
+    public Vector3Int currentAgentToBasePosition;
 
-    private Vector2 destination;
+    private Vector3Int destination;
+
+    private Vector3 idealRealWorldPosition;
+    private float realWorldSpeedOfMoving = 0.2f;
     void Awake() {
-        agentMemory = new List<Tile>();
+        agentMemory = new List<TileMemory>();
         currentVision = new List<Tile>();
     }
 
@@ -22,11 +24,12 @@ public class MovingAgent : Agent {
         StartCoroutine(playTurn());
     }
 
-    public void setInitialPosition() {//uses real world matrix positions, to improve maybe
-        transform.localPosition = currentAgentToBasePosition;
-
-        currentTile = Planet.instance.planetGraphInfo.getTileWithPos
-            (Base.instance.position + currentAgentToBasePosition);
+    void Update() {
+        transform.position = Vector3.MoveTowards(transform.position, idealRealWorldPosition, realWorldSpeedOfMoving);
+    }
+    public void setInitialPosition() {
+        transform.localPosition = idealRealWorldPosition = currentAgentToBasePosition;
+        currentTile = Planet.instance.planetGraphInfo.allPlanetTiles[0]; //first tile
     }
 
     private IEnumerator playTurn() {
@@ -42,7 +45,7 @@ public class MovingAgent : Agent {
 #endif
         yield return new WaitForSeconds(paceOfMoving);
 
-        Move(calculateWhereToMoveMatrix());
+        Move();
         updateCurentVision();
         updateAgentMemory();
         Planet.instance.agentMoved(this);
@@ -53,11 +56,12 @@ public class MovingAgent : Agent {
     private void updateAgentMemory() {
 
         List<Tile> currentVision = new List<Tile>();
-        addPlanetTilesWithBFS(currentVision);
+        addPlanetTilesWithDFS(currentVision);
 
         foreach (Tile tile in currentVision) {
-            if (!agentMemory.Contains(tile)) {
-                agentMemory.Add(tile);
+            TileMemory tileMemory = new TileMemory(tile);
+            if (!agentMemory.Contains(tileMemory)) {
+                agentMemory.Add(tileMemory);
             }
         }
     }
@@ -65,16 +69,17 @@ public class MovingAgent : Agent {
     private void updateCurentVision() {
         currentVision.Clear();
 
-        addPlanetTilesWithBFS(currentVision);
+        addPlanetTilesWithDFS(currentVision);
 
         foreach (Tile tile in currentVision) {
-            if (!agentMemory.Contains(tile)) {
-                agentMemory.Add(tile);
+            TileMemory tileMemory = new TileMemory(tile);
+            if (!agentMemory.Contains(tileMemory)) {
+                agentMemory.Add(tileMemory);
             }
         }
     }
 
-    private void addPlanetTilesWithBFS(List<Tile> listToAdd) {
+    private void addPlanetTilesWithDFS(List<Tile> listToAdd) {
         Stack<KeyValuePair<Tile, int>> tilesToAdd = new Stack<KeyValuePair<Tile, int>>();
 
         tilesToAdd.Push(new KeyValuePair<Tile, int>(currentTile, 0));
@@ -83,7 +88,7 @@ public class MovingAgent : Agent {
             KeyValuePair<Tile, int> currTileAndDepth = tilesToAdd.Pop();
 
             listToAdd.Add(currTileAndDepth.Key);
-            
+
             if (currTileAndDepth.Value < visionDistance) {
                 foreach (Tile neighour in currTileAndDepth.Key.neighbours) {
                     if (!listToAdd.Contains(neighour)) {
@@ -95,21 +100,28 @@ public class MovingAgent : Agent {
         }
     }
 
-    //TODO adapt to graph
-    private Vector2 calculateWhereToMoveMatrix() {
-        int maxX = 1; int maxY = 1;
-        return new Vector2(UnityEngine.Random.Range(0, maxX)+1,
-            UnityEngine.Random.Range(0, maxY)+1); //temp
+    private void Move() {
+        if (currentTile.neighbours.Count==0) {
+            Debug.Log(currentTile.name + " neighbours.Count = 0");
+            return;
+        }
+        Tile newTile = currentTile.neighbours[0];
+
+        foreach (Tile tile in currentTile.neighbours) {
+            //TODO DECIDE WHERE TO GO
+            //TileMemory tileMemory = agentMemory.Find(new TileMemory(tile));
+            if (tile.wetness > newTile.wetness) {
+                newTile = tile;
+            }
+        }
+
+        if (newTile.TileObject != null) {
+            moveToTile(newTile);
+        }
     }
 
-    private void Move(Vector2 dir) {
-        this.currentTile = currentTile.
-            neighbours[UnityEngine.Random.Range(0, currentTile.neighbours.Count)];
-
-        moveToTile(currentTile);
-    }
-
-    private void moveToTile(Tile tile) {
-        transform.position = new Vector3(tile.coorcinates.x,0, tile.coorcinates.y);
+    private void moveToTile(Tile newTile) {
+        this.currentTile = newTile;
+        idealRealWorldPosition = newTile.TileObject.transform.position;
     }
 }

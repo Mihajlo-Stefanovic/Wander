@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AgentVisionManager : MonoBehaviour {
+public class AgentAtacher : MonoBehaviour {
     public GameObject cam;
 	void Update () {
         if(Input.GetMouseButtonDown(0)) {
@@ -20,23 +20,22 @@ public class AgentVisionManager : MonoBehaviour {
     }
 
     private void detachAgent() {
-        cam.GetComponent<CinemachineVirtualCamera>().Follow = null;
-        cam.GetComponent<CinemachineVirtualCamera>().LookAt = null;
+        cam.GetComponent<CinemachineVirtualCamera>().Follow = Base.instance.gameObject.transform;
 
-        Planet.instance. currentAgentToRender = null;
+        Planet.instance.currentAgentToRender = Base.instance;
         Planet.instance.currentRenderMode = RenderMode.Free;
 
         foreach (Agent agent in Base.instance.agents) {
             agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = true;
         }
 
-        Planet.instance.planetVisualInfo.renderAllTiles();
+        Planet.instance.planetVisualInfo.renderOnlyThisTiles(Planet.getTilesInDepth(
+            Base.instance.currentTile, Planet.instance.planetVisualInfo.normalVisionWidth));
     }
 
     private void attachAgent(MovingAgent agentToAttach) {
         if (agentToAttach!=null) {
             cam.GetComponent<CinemachineVirtualCamera>().Follow = agentToAttach.gameObject.transform;
-            cam.GetComponent<CinemachineVirtualCamera>().LookAt = agentToAttach.gameObject.transform;
 
             foreach (MovingAgent agent in Base.instance.agents) {
                 if (agent != agentToAttach)

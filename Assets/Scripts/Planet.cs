@@ -1,47 +1,40 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 public enum RenderMode {
-    Vision,Memory,Free
+    Vision, Memory, Free
 }
 public class Planet : MonoBehaviour {
     public static Planet instance;
 
+    public int randomSeed;
+
     public PlanetGraphInfo planetGraphInfo;
     public PlanetVisualInfo planetVisualInfo;
-
+    [System.NonSerialized]
     public Agent currentAgentToRender;
+    [System.NonSerialized]
     public RenderMode currentRenderMode;
 
-    [SerializeField]
-    private int numOfPlanetTiles;
-
-    public int NumOfPlanetTilesX {
-        get {
-            return (int)Mathf.Sqrt(numOfPlanetTiles);
-        }
-    }
-    [HideInInspector]
-    public int NumOfPlanetTilesY {
-        get {
-            return (int)Mathf.Sqrt(numOfPlanetTiles);
-        }
-    }
+    public Vector3 planetLandingPos;
 
     void Awake() {
-        if (instance == null)
+        if (instance == null) {
             instance = this;
-        else if (instance != this)
+        }
+        else if (instance != this) {
             Destroy(this);
+        }
 
+        UnityEngine.Random.InitState(randomSeed);
         currentRenderMode = RenderMode.Free;
 
-        planetGraphInfo = new PlanetGraphInfo(numOfPlanetTiles);
+        //planetGraphInfo = new PlanetGraphInfo();
+        planetGraphInfo.generateGraph();
+        planetGraphInfo.generateTileWetness();
     }
 
     void Start() {
-        planetVisualInfo.instantiateVisuals();
+        planetVisualInfo.instantiateVisuals(planetLandingPos);
     }
 
     public void agentMoved(Agent agent) {
@@ -51,9 +44,35 @@ public class Planet : MonoBehaviour {
     }
 
     private void rendererAgent() {
-        if (currentRenderMode == RenderMode.Vision)
+        if (currentRenderMode == RenderMode.Vision) {
             planetVisualInfo.renderCurrentVisionForAgent(currentAgentToRender);
-        else if (currentRenderMode == RenderMode.Memory)
+        }
+        else if (currentRenderMode == RenderMode.Memory) {
             planetVisualInfo.renderMemoryForAgent(currentAgentToRender);
+        }
+    }
+
+    public static List<Tile> getTilesInDepth(Tile tile, int depth) {
+        Queue<KeyValuePair<Tile, int>> tilesToVisit = new Queue<KeyValuePair<Tile, int>>();
+        List<Tile> visitedTiles = new List<Tile>();
+
+        tilesToVisit.Enqueue(new KeyValuePair<Tile, int>(tile, 0));
+
+        while (tilesToVisit.Count != 0) {
+
+            KeyValuePair<Tile, int> currTileAndDepth = tilesToVisit.Dequeue();
+
+            if (!visitedTiles.Contains(currTileAndDepth.Key) && currTileAndDepth.Value<depth) {
+
+                visitedTiles.Add(currTileAndDepth.Key);
+
+                foreach (Tile neighour in currTileAndDepth.Key.neighbours) {
+                    tilesToVisit.Enqueue(new KeyValuePair<Tile, int>(neighour, currTileAndDepth.Value + 1));
+                }
+            }
+
+        }
+
+        return visitedTiles;
     }
 }
