@@ -29,7 +29,7 @@ public class MovingAgent : Agent {
     }
     public void setInitialPosition() {
         transform.localPosition = idealRealWorldPosition = currentAgentToBasePosition;
-        currentTile = Planet.instance.planetGraphInfo.allPlanetTiles[0]; //first tile
+        currentTile = Planet.instance.planetGraphInfo.currPlanetTiles[0]; //first tile
     }
 
     private IEnumerator playTurn() {
@@ -90,7 +90,7 @@ public class MovingAgent : Agent {
             listToAdd.Add(currTileAndDepth.Key);
 
             if (currTileAndDepth.Value < visionDistance) {
-                foreach (Tile neighour in currTileAndDepth.Key.neighbours) {
+                foreach (Tile neighour in currTileAndDepth.Key.Neighbours) {
                     if (!listToAdd.Contains(neighour)) {
                         tilesToAdd.Push(new KeyValuePair<Tile, int>(neighour, currTileAndDepth.Value + 1));
                     }
@@ -101,16 +101,16 @@ public class MovingAgent : Agent {
     }
 
     private void Move() {
-        if (currentTile.neighbours.Count==0) {
+        if (currentTile.Neighbours.Count==0) {
             Debug.Log(currentTile.name + " neighbours.Count = 0");
             return;
         }
-        Tile newTile = currentTile.neighbours[0];
+        Tile newTile = currentTile.Neighbours[0];
 
-        foreach (Tile tile in currentTile.neighbours) {
+        foreach (Tile tile in currentTile.Neighbours) {
             //TODO DECIDE WHERE TO GO
             //TileMemory tileMemory = agentMemory.Find(new TileMemory(tile));
-            if (tile.wetness > newTile.wetness) {
+            if (tile.Wetness > newTile.Wetness) {
                 newTile = tile;
             }
         }

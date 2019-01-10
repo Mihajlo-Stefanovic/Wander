@@ -15,7 +15,7 @@ public class Planet : MonoBehaviour {
     [System.NonSerialized]
     public RenderMode currentRenderMode;
 
-    public Vector3 planetLandingPos;
+    public Tile graphCenterTile;
 
     void Awake() {
         if (instance == null) {
@@ -25,16 +25,13 @@ public class Planet : MonoBehaviour {
             Destroy(this);
         }
 
-        UnityEngine.Random.InitState(randomSeed);
         currentRenderMode = RenderMode.Free;
 
-        //planetGraphInfo = new PlanetGraphInfo();
-        planetGraphInfo.generateGraph();
-        planetGraphInfo.generateTileWetness();
+        graphCenterTile = planetGraphInfo.initializeGraph();
     }
 
     void Start() {
-        planetVisualInfo.instantiateVisuals(planetLandingPos);
+        planetVisualInfo.instantiateVisuals(graphCenterTile);
     }
 
     public void agentMoved(Agent agent) {
@@ -62,11 +59,11 @@ public class Planet : MonoBehaviour {
 
             KeyValuePair<Tile, int> currTileAndDepth = tilesToVisit.Dequeue();
 
-            if (!visitedTiles.Contains(currTileAndDepth.Key) && currTileAndDepth.Value<depth) {
+            if (!visitedTiles.Contains(currTileAndDepth.Key) && currTileAndDepth.Value<=depth) {
 
                 visitedTiles.Add(currTileAndDepth.Key);
 
-                foreach (Tile neighour in currTileAndDepth.Key.neighbours) {
+                foreach (Tile neighour in currTileAndDepth.Key.Neighbours) {
                     tilesToVisit.Enqueue(new KeyValuePair<Tile, int>(neighour, currTileAndDepth.Value + 1));
                 }
             }
@@ -74,5 +71,10 @@ public class Planet : MonoBehaviour {
         }
 
         return visitedTiles;
+    }
+
+    public void generateMapFor(Tile tile) {
+        planetGraphInfo.generateGraph(tile, planetVisualInfo.normalVisionWidth);
+        planetVisualInfo.instantiateVisuals(tile);
     }
 }

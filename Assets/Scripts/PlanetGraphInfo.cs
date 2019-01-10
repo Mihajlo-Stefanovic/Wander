@@ -19,55 +19,78 @@ public class PlanetGraphInfo {
     public int wetnesDecreaseFrequency;
     public float oscilRange;
     public int wetnessSpread;
-
+    public int wetImpact {
+        get {
+            return (int)Mathf.Ceil((1 / wetnesDecreaseFarctor) * wetnesDecreaseFrequency);
+        }
+    }
     [System.NonSerialized]
-    public List<Tile> allPlanetTiles = new List<Tile>();
+    public List<Tile> currPlanetTiles = new List<Tile>();
 
-    public void generateGraph() {
+    public Tile initializeGraph() {
         initialGraphWidth = Planet.instance.planetVisualInfo.normalVisionWidth;
         Tile firstTile = new Tile(0, 0, 0);
-        allPlanetTiles.Add(firstTile);
+        currPlanetTiles.Add(firstTile);
 
         switch (planetGraphType) {
             case PlanetGraphType.matrix:
-                generateMatrixLikeGraph(firstTile, initialGraphWidth);
+                generateMatrixLikeGraph(firstTile, initialGraphWidth + wetImpact);
                 break;
             case PlanetGraphType.hexagonal:
                 generateHexagonGraph();
                 break;
         }
+        generateTileWetness(firstTile, initialGraphWidth + wetImpact);
+        postProcesTileWetness(firstTile, initialGraphWidth);
+        return firstTile;
     }
-    public void generateMatrixLikeGraph(Tile startingTile, int graphWidth) {
-        int numOfTiles = (int) Mathf.Pow((graphWidth * 2) +1,2);
+
+    public void generateGraph(Tile startingTile, int graphWidth) {
+        switch (planetGraphType) {
+            case PlanetGraphType.matrix:
+                generateMatrixLikeGraph(startingTile, graphWidth + wetImpact);
+                break;
+            case PlanetGraphType.hexagonal:
+                generateHexagonGraph();
+                break;
+        }
+        generateTileWetness(startingTile, graphWidth + wetImpact);
+        postProcesTileWetness(startingTile, graphWidth);
+    }
+
+    private void generateMatrixLikeGraph(Tile startingTile, int graphWidth) {
+        int numOfTiles = (graphWidth * 4) + (4 * (graphWidth * (graphWidth - 1) / 2)) + 1;
+
         int currNumofTiles = 0;
+
+        Vector2Int[] neighboursPos = {new Vector2Int(-1,0), new Vector2Int(+1,0), new Vector2Int(0,-1)
+                , new Vector2Int (0,+1)};
 
         Queue<Tile> tilesToGenerateAround = new Queue<Tile>();
         tilesToGenerateAround.Enqueue(startingTile);
         currNumofTiles = 1;
 
         while (currNumofTiles < numOfTiles) {
-            Tile currTile = tilesToGenerateAround.Dequeue();
-            for(int x=-1;x<=1;x++)
-                for(int y = -1; y <= 1; y++) {
-                    if (x != 0 || y != 0) { //pos(0,0)
-                        Vector3Int coor = new Vector3Int(x, y,0);
-                        bool add = true;
-                        foreach(Tile tile in currTile.neighbours) {
-                            if (tile.virtualCoordinates.Equals(coor+currTile.virtualCoordinates)) {
-                                add = false;
-                            }
-                        }
-                        if (add) {
-                            Tile newTile = new Tile(coor + currTile.virtualCoordinates);
-                            allPlanetTiles.Add(newTile);
-                            currTile.addNeighoursConnection(newTile);
-                            tilesToGenerateAround.Enqueue(newTile);
-                            currNumofTiles += 1;
-                        }
+            Tile currTileToGenerateAround = tilesToGenerateAround.Dequeue();
+            foreach (Vector2Int pos in neighboursPos) {
+                Vector3Int coor = new Vector3Int(pos.x, pos.y, 0);
+                bool add = true;
+                foreach (Tile tile in currTileToGenerateAround.Neighbours) {
+                    if (tile.virtualCoordinates.Equals(coor + currTileToGenerateAround.virtualCoordinates)) {
+                        add = false;
                     }
                 }
-            foreach(Tile tile in currTile.neighbours) {
-                connectWithGraph(tile, currTile.neighbours);
+                if (add) {
+                    Tile newTile = new Tile(coor + currTileToGenerateAround.virtualCoordinates);
+                    currPlanetTiles.Add(newTile);
+                    currTileToGenerateAround.addNeighoursConnection(newTile);
+                    //hack for connecting
+                    foreach (Tile tile in currTileToGenerateAround.Neighbours) {
+                        connectWith(newTile, tile.Neighbours);
+                    }
+                    tilesToGenerateAround.Enqueue(newTile);
+                    currNumofTiles += 1;
+                }
             }
         }
 #if DebugNeighbours
@@ -79,42 +102,48 @@ public class PlanetGraphInfo {
         //TODO implement
     }
 
-    public void generateTileWetness() {
+    public void generateTileWetness(Tile startingTile, int graphWidth) {
+        UnityEngine.Random.InitState(startingTile.GetHashCode());
+        List<Tile> tiles = Planet.getTilesInDepth(startingTile, graphWidth);
         switch (wetnessType) {
             case WetnessType.islands:
 
                 List<Tile> wetTiles = new List<Tile>();
 
                 //setting watter tiles
-                foreach (Tile tile in allPlanetTiles) {
+                foreach (Tile tile in tiles) {
                     if (System.Math.Round(Random.Range(0f, 100f), 2) <= wetFrequency) {
-                        tile.wetness = 1;
+                        tile.Wetness = 1;
                         wetTiles.Add(tile);
                     }
                 }
 
                 //spreading direct wetness
                 spreadDirectWetnessBFS(wetTiles);
-
-                //setting random oscilations in wetness
-                foreach (Tile tile in allPlanetTiles) {
-                    tile.wetness += Random.Range(-oscilRange, oscilRange);
-                }
-
-                //spreading undirect wetness
-                for (int i = 0; i < wetnessSpread; i++) {
-                    foreach (Tile tile in allPlanetTiles) {
-                        if (tile.wetness != 1) { //not changing watter tiles
-                            float wetness = 0;
-                            foreach (Tile neighbour in tile.neighbours) {
-                                wetness += neighbour.wetness;
-                            }
-                            wetness /= tile.neighbours.Count;
-                            tile.wetness = wetness;
-                        }
-                    }
-                }
                 break;
+        }
+    }
+
+    public void postProcesTileWetness(Tile startingTile, int graphWidth) {
+        List<Tile> tiles = Planet.getTilesInDepth(startingTile, graphWidth);
+
+        //setting random oscilations in wetness
+        foreach (Tile tile in tiles) {
+            tile.Wetness += Random.Range(-oscilRange, oscilRange);
+        }
+
+        //spreading undirect wetness, tl;dr smudge
+        for (int i = 0; i < wetnessSpread; i++) {
+            foreach (Tile tile in tiles) {
+                //if ((int)tile.wetness != 1) { //not changing watter tiles
+                float wetness = 0;
+                foreach (Tile neighbour in tile.Neighbours) {
+                    wetness += neighbour.Wetness;
+                }
+                wetness /= tile.Neighbours.Count;
+                tile.Wetness = wetness;
+                //}
+            }
         }
     }
 
@@ -133,14 +162,10 @@ public class PlanetGraphInfo {
                         wetnesDecreaseFarctor * (currTileAndDepth.Value / wetnesDecreaseFrequency) < 1) {
 
                     visitedTiles.Add(currTileAndDepth.Key);
-                    currTileAndDepth.Key.wetness += 1 - wetnesDecreaseFarctor
+                    currTileAndDepth.Key.Wetness += 1 - wetnesDecreaseFarctor
                         * (currTileAndDepth.Value / wetnesDecreaseFrequency); //1 is max wet
 
-                    if (currTileAndDepth.Key.wetness > 1) {
-                        currTileAndDepth.Key.wetness = 1;
-                    }
-
-                    foreach (Tile neighour in currTileAndDepth.Key.neighbours) {
+                    foreach (Tile neighour in currTileAndDepth.Key.Neighbours) {
                         tilesToVisit.Enqueue(new KeyValuePair<Tile, int>(neighour, currTileAndDepth.Value + 1));
                     }
                 }
@@ -150,17 +175,17 @@ public class PlanetGraphInfo {
 
     }
 
-    private void connectWithGraph(Tile tileToConnect, List<Tile> graph) {
-        foreach (Tile tile in graph) {
+    private void connectWith(Tile tileToConnect, List<Tile> listOfTiles) {
+        foreach (Tile tile in listOfTiles) {
             if (tileToConnect.shouldBeNeighbourTo(tile, planetGraphType)) {
                 tileToConnect.addNeighoursConnection(tile);
             }
         }
     }
 
-    public Tile getTileWithPos(Vector2Int virtualCoordinates) {
-        foreach (Tile tile in allPlanetTiles) {
-            if ((tile.virtualCoordinates.x == virtualCoordinates.x) && (tile.virtualCoordinates.y == virtualCoordinates.y)) {
+    public Tile getTileWithPos(Vector3Int virtualCoordinates) {
+        foreach (Tile tile in currPlanetTiles) {
+            if (tile.virtualCoordinates.Equals(virtualCoordinates)) {
                 return tile;
             }
         }
@@ -168,9 +193,9 @@ public class PlanetGraphInfo {
     }
 
     private void debugNeighbours() {
-        foreach (Tile tile in Planet.instance.planetGraphInfo.allPlanetTiles) {
-            Debug.Log(tile.neighbours.Count);
-            foreach (Tile neighb in tile.neighbours) {
+        foreach (Tile tile in Planet.instance.planetGraphInfo.currPlanetTiles) {
+            Debug.Log(tile.name + " num of children: " + tile.Neighbours.Count);
+            foreach (Tile neighb in tile.Neighbours) {
                 Debug.Log(neighb);
             }
         }
@@ -207,4 +232,4 @@ public class PlanetGraphInfo {
 #endif
     }*/
 }
-    
+

@@ -2,7 +2,7 @@
 using UnityEngine;
 
 public class Tile {
-    public float wetness;
+    private float wetness;
 
     public readonly Vector3Int virtualCoordinates;
 
@@ -11,7 +11,7 @@ public class Tile {
     private GameObject tileObject;
     private SpriteRenderer spriteRenderer;
 
-    public List<Tile> neighbours;
+    private List<Tile> neighbours;
     private Vector3Int vector3Int;
 
     public SpriteRenderer SpriteRenderer {
@@ -33,34 +33,59 @@ public class Tile {
         }
     }
 
+    public float Wetness {
+        get {
+            return wetness;
+        }
+
+        set {
+            if (value > 1) {
+                wetness = 1;
+            }
+            else {
+                wetness = value;
+            }
+        }
+    }
+
+    public List<Tile> Neighbours {
+        get {
+            return neighbours;
+        }
+
+        private set {
+            neighbours = value;
+        }
+    }
+
     public Tile(int x, int y, float wetness) {
         name = "Tile_x:" + x + "_y:" + y;
         virtualCoordinates = new Vector3Int(x, y, 0);
-        this.wetness = wetness;
+        this.Wetness = wetness;
 
-        neighbours = new List<Tile>();
+        Neighbours = new List<Tile>();
     }
 
     public Tile(Vector2Int position, float wetness) {
         name = "Tile_x:" + position.x + "_y:" + position.y;
         virtualCoordinates = new Vector3Int(position.x, position.y, 0);
-        this.wetness = wetness;
+        this.Wetness = wetness;
 
-        neighbours = new List<Tile>();
+        Neighbours = new List<Tile>();
     }
 
     public Tile(Vector2Int position) {
         name = "Tile_x:" + position.x + "_y:" + position.y;
         virtualCoordinates = new Vector3Int(position.x, position.y, 0);
 
-        neighbours = new List<Tile>();
+        Neighbours = new List<Tile>();
     }
 
     public Tile(Vector3Int position) {
         name = "Tile_x:" + position.x + "_y:" + position.y;
         virtualCoordinates = new Vector3Int(position.x, position.y, position.z);
 
-        neighbours = new List<Tile>();
+        Neighbours = new List<Tile>();
     }
 
     public override string ToString() {
@@ -70,8 +95,12 @@ public class Tile {
     public bool shouldBeNeighbourTo(Tile tile, PlanetGraphType planetGraphType) {
         switch (planetGraphType) {
             case PlanetGraphType.matrix:
-                if (Mathf.Abs(this.virtualCoordinates.x - tile.virtualCoordinates.x) <= 1 && Mathf.Abs(this.virtualCoordinates.y - tile.virtualCoordinates.y) <= 1) {
-                    return true;
+                int offX = Mathf.Abs(this.virtualCoordinates.x - tile.virtualCoordinates.x);
+                int offY = Mathf.Abs(this.virtualCoordinates.y - tile.virtualCoordinates.y);
+                if (offX <= 1 && offY <= 1) {
+                    if (offX != offY){ //removes diagonal and center
+                        return true;
+                    }
                 }
                 return false;
             case PlanetGraphType.hexagonal:
@@ -86,13 +115,16 @@ public class Tile {
             return;
         }
 
-        if (!this.neighbours.Contains(tile)) {
-            this.neighbours.Add(tile);
+        if (!this.Neighbours.Contains(tile)) {
+            this.Neighbours.Add(tile);
         }
 
-        if (!tile.neighbours.Contains(this)) {
-            tile.neighbours.Add(this);
+        if (!tile.Neighbours.Contains(this)) {
+            tile.Neighbours.Add(this);
         }
     }
 
+    public override int GetHashCode() {
+        return virtualCoordinates.GetHashCode();
+    }
 }
