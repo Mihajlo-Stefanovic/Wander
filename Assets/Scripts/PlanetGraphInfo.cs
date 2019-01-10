@@ -29,36 +29,44 @@ public class PlanetGraphInfo {
 
     public Tile initializeGraph() {
         initialGraphWidth = Planet.instance.planetVisualInfo.normalVisionWidth;
-        Tile firstTile = new Tile(0, 0, 0);
-        currPlanetTiles.Add(firstTile);
+        Tile graphCenterTile = new Tile(0, 0, 0);
+        currPlanetTiles.Add(graphCenterTile);
 
         switch (planetGraphType) {
             case PlanetGraphType.matrix:
-                generateMatrixLikeGraph(firstTile, initialGraphWidth + wetImpact);
+                generateMatrixLikeGraph(graphCenterTile, initialGraphWidth + wetImpact);
                 break;
             case PlanetGraphType.hexagonal:
                 generateHexagonGraph();
                 break;
         }
-        generateTileWetness(firstTile, initialGraphWidth + wetImpact);
-        postProcesTileWetness(firstTile, initialGraphWidth);
-        return firstTile;
+        generateTileWetness(graphCenterTile, initialGraphWidth + wetImpact);
+        postProcesTileWetness(graphCenterTile, initialGraphWidth + wetImpact);
+        return graphCenterTile;
     }
 
-    public void generateGraph(Tile startingTile, int graphWidth) {
+    public Tile generateGraph(Tile graphCenterTile, int graphWidth) {
+        foreach (Tile tile in currPlanetTiles) {
+            MonoBehaviour.Destroy(tile.TileObject);
+        }
+        currPlanetTiles.Clear();
+
+        Tile newStartingTile = new Tile(graphCenterTile.virtualCoordinates);
+        currPlanetTiles.Add(newStartingTile);
         switch (planetGraphType) {
             case PlanetGraphType.matrix:
-                generateMatrixLikeGraph(startingTile, graphWidth + wetImpact);
+                generateMatrixLikeGraph(newStartingTile, graphWidth + wetImpact);
                 break;
             case PlanetGraphType.hexagonal:
                 generateHexagonGraph();
                 break;
         }
-        generateTileWetness(startingTile, graphWidth + wetImpact);
-        postProcesTileWetness(startingTile, graphWidth);
+        generateTileWetness(newStartingTile, graphWidth + wetImpact);
+        postProcesTileWetness(newStartingTile, graphWidth + wetImpact);
+        return newStartingTile;
     }
 
-    private void generateMatrixLikeGraph(Tile startingTile, int graphWidth) {
+    private void generateMatrixLikeGraph(Tile graphCenterTile, int graphWidth) {
         int numOfTiles = (graphWidth * 4) + (4 * (graphWidth * (graphWidth - 1) / 2)) + 1;
 
         int currNumofTiles = 0;
@@ -67,7 +75,7 @@ public class PlanetGraphInfo {
                 , new Vector2Int (0,+1)};
 
         Queue<Tile> tilesToGenerateAround = new Queue<Tile>();
-        tilesToGenerateAround.Enqueue(startingTile);
+        tilesToGenerateAround.Enqueue(graphCenterTile);
         currNumofTiles = 1;
 
         while (currNumofTiles < numOfTiles) {
@@ -103,15 +111,14 @@ public class PlanetGraphInfo {
     }
 
     public void generateTileWetness(Tile startingTile, int graphWidth) {
-        UnityEngine.Random.InitState(startingTile.GetHashCode());
         List<Tile> tiles = Planet.getTilesInDepth(startingTile, graphWidth);
         switch (wetnessType) {
             case WetnessType.islands:
-
                 List<Tile> wetTiles = new List<Tile>();
 
                 //setting watter tiles
                 foreach (Tile tile in tiles) {
+                    UnityEngine.Random.InitState(getSeedFOrTile(tile));
                     if (System.Math.Round(Random.Range(0f, 100f), 2) <= wetFrequency) {
                         tile.Wetness = 1;
                         wetTiles.Add(tile);
@@ -124,11 +131,16 @@ public class PlanetGraphInfo {
         }
     }
 
+    private static int getSeedFOrTile(Tile tile) {
+        return int.MaxValue & (tile.GetHashCode() ^ Planet.instance.randomSeed);
+    }
+
     public void postProcesTileWetness(Tile startingTile, int graphWidth) {
         List<Tile> tiles = Planet.getTilesInDepth(startingTile, graphWidth);
 
         //setting random oscilations in wetness
         foreach (Tile tile in tiles) {
+            UnityEngine.Random.InitState(getSeedFOrTile(tile));
             tile.Wetness += Random.Range(-oscilRange, oscilRange);
         }
 

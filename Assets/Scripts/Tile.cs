@@ -125,6 +125,7 @@ public class Tile {
     }
 
     public override int GetHashCode() {
-        return virtualCoordinates.GetHashCode();
+        string s = virtualCoordinates.x + " " + virtualCoordinates.y + " " + virtualCoordinates.z;
+        return s.GetHashCode();
     }
 }

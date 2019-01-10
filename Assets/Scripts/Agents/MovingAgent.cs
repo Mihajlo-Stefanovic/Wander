@@ -1,5 +1,7 @@
 ﻿#undef AGENTMEMORY
 #undef CURRENTVISION
+#undef MOVING
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,19 +15,18 @@ public class MovingAgent : Agent {
     private Vector3Int destination;
 
     private Vector3 idealRealWorldPosition;
-    private float realWorldSpeedOfMoving = 0.2f;
+    private float realWorldSpeedOfMoving = 10f;
     void Awake() {
         agentMemory = new List<TileMemory>();
         currentVision = new List<Tile>();
     }
 
     void Start() {
-        //position is set in base
         StartCoroutine(playTurn());
     }
 
     void Update() {
-        transform.position = Vector3.MoveTowards(transform.position, idealRealWorldPosition, realWorldSpeedOfMoving);
+        transform.position = Vector3.MoveTowards(transform.position, idealRealWorldPosition, realWorldSpeedOfMoving * Time.deltaTime);
     }
     public void setInitialPosition() {
         transform.localPosition = idealRealWorldPosition = currentAgentToBasePosition;
@@ -102,12 +103,20 @@ public class MovingAgent : Agent {
 
     private void Move() {
         if (currentTile.Neighbours.Count==0) {
+#if MOVING
             Debug.Log(currentTile.name + " neighbours.Count = 0");
+#endif
             return;
         }
         Tile newTile = currentTile.Neighbours[0];
 
+#if MOVING
+        Debug.Log("curr" + currentTile.name);
+#endif
         foreach (Tile tile in currentTile.Neighbours) {
+#if MOVING
+            Debug.Log(tile.name);
+#endif
             //TODO DECIDE WHERE TO GO
             //TileMemory tileMemory = agentMemory.Find(new TileMemory(tile));
             if (tile.Wetness > newTile.Wetness) {
@@ -120,8 +129,16 @@ public class MovingAgent : Agent {
         }
     }
 
-    private void moveToTile(Tile newTile) {
+    public void moveToTile(Tile newTile) {
+#if MOVING
+        Debug.Log("move to: " + newTile.name);
+#endif
         this.currentTile = newTile;
         idealRealWorldPosition = newTile.TileObject.transform.position;
+    }
+
+    internal void reset(Tile startingTile) {
+        agentMemory = new List<TileMemory>();
+        moveToTile(startingTile);
     }
 }

@@ -20,7 +20,7 @@ public class AgentAtacher : MonoBehaviour {
     }
 
     private void detachAgent() {
-        cam.GetComponent<CinemachineVirtualCamera>().Follow = Base.instance.gameObject.transform;
+        cam.GetComponent<CinemachineVirtualCamera>().Follow = null;
 
         Planet.instance.currentAgentToRender = Base.instance;
         Planet.instance.currentRenderMode = RenderMode.Free;

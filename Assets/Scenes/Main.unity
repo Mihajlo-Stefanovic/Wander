@@ -635,7 +635,7 @@ PrefabInstance:
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
       propertyPath: planetGraphInfo.oscilRange
-      value: 0.5
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
@@ -655,7 +655,7 @@ PrefabInstance:
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
       propertyPath: planetGraphInfo.wetFrequency
-      value: 0.05
+      value: 0.08
       objectReference: {fileID: 0}
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
@@ -665,7 +665,7 @@ PrefabInstance:
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
       propertyPath: randomSeed
-      value: 42
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}

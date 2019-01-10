@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Base : Agent {
@@ -27,9 +28,15 @@ public class Base : Agent {
     }
 
     void setInitialPosition() { //uses real world matrix positions, to improve maybe
-        transform.position = Planet.instance.graphCenterTile.TileObject.transform.position;
+        transform.position = Planet.instance.planetVisualInfo.getRealWorldCoordinates(Planet.instance.graphCenterTile);
         currentTile = Planet.instance.planetGraphInfo.currPlanetTiles[0];
         position = Planet.instance.planetGraphInfo.currPlanetTiles[0].virtualCoordinates;
     }
 
+    internal void reposition(Tile startingTile) {
+        currentTile = startingTile;
+        foreach(MovingAgent agent in agents) {
+            agent.reset(startingTile);
+        }
+    }
 }

@@ -16,6 +16,8 @@ public class Planet : MonoBehaviour {
     public RenderMode currentRenderMode;
 
     public Tile graphCenterTile;
+    [Header("For generation")]
+    public Vector3Int virtualCenter; //hack for generating
 
     void Awake() {
         if (instance == null) {
@@ -73,8 +75,10 @@ public class Planet : MonoBehaviour {
         return visitedTiles;
     }
 
-    public void generateMapFor(Tile tile) {
-        planetGraphInfo.generateGraph(tile, planetVisualInfo.normalVisionWidth);
-        planetVisualInfo.instantiateVisuals(tile);
+    public void generateMapFor(Tile graphCenterTile) {
+        Tile newStartingTile = planetGraphInfo.generateGraph(graphCenterTile, planetVisualInfo.normalVisionWidth);
+        this.graphCenterTile = newStartingTile;
+        planetVisualInfo.instantiateVisuals(newStartingTile);
+        Base.instance.reposition(newStartingTile);
     }
 }
