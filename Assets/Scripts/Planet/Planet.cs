@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Cinemachine;
+using System.Collections.Generic;
 using UnityEngine;
 public enum RenderMode {
     Vision, Memory, Free
@@ -32,6 +33,9 @@ public class Planet : MonoBehaviour {
             Destroy(this);
         }
 
+#if (UNITY_EDITOR)
+        randomSeed = Random.Range(0, int.MaxValue);
+#endif
         currentRenderMode = RenderMode.Free;
 
         graphCenterTile = planetGraphInfo.initializeGraph();
@@ -43,7 +47,9 @@ public class Planet : MonoBehaviour {
     }
 
     void Update() {
+#if (UNITY_EDITOR)
         Time.timeScale = speed;
+#endif
     }
     public void agentMoved(Agent agent) {
         if (agent == currentAgentToRender) {
@@ -90,5 +96,17 @@ public class Planet : MonoBehaviour {
         this.graphCenterTile = newStartingTile;
         planetVisualInfo.instantiateVisuals(newStartingTile);
         Base.instance.reposition(newStartingTile);
+    }
+
+    public void detachAgent() {
+        Planet.instance.currentAgentToRender = Base.instance;
+        Planet.instance.currentRenderMode = RenderMode.Free;
+
+        foreach (MovingAgent agent in Base.instance.agents) {
+            agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = true;
+        }
+
+        Planet.instance.planetVisualInfo.renderOnlyThisTiles(Planet.getTilesInDepth(
+            Base.instance.currentTile, Planet.instance.planetVisualInfo.normalVisionWidth));
     }
 }

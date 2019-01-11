@@ -16,14 +16,18 @@ public class AgentMemory {
         }
     }
 
-    public void updateCurentVision(Tile currentTile, int visionDistance, float wetnessLimit = -1, bool reset=true) {
-        if(reset)
+    public void updateCurentVision(Tile currentTile, int visionDistance, float wetnessLimit = -1, bool reset = true) {
+        if (reset) {
             currentVision = new List<TileMemory>();
+        }
 
         List<Tile> tiles = Planet.getTilesInDepth(currentTile, visionDistance, wetnessLimit);
 
         foreach (Tile tile in tiles) {
+            //if (tile.virtualCoordinates.x + tile.virtualCoordinates.y + tile.virtualCoordinates.z
+            //    < Planet.instance.planetVisualInfo.normalVisionWidth) { //checks if visible on screen
             TileMemory tileMemory;
+
             if (tileMemories.TryGetValue(tile.GetHashCode(), out tileMemory)) {
                 ;
             }
@@ -37,6 +41,7 @@ public class AgentMemory {
             }
             currentVision.Add(tileMemory);
         }
+        //}
     }
 
     private void addMemory(TileMemory tileMemory) {

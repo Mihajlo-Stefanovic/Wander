@@ -19,7 +19,7 @@ public class MovingAgent : Agent {
     public float timesWeigth;
     public float ordersWeight;
 
-    public List<TileMemory> waterTilesFound;
+    public List<Tile> waterTilesFound;
     public float waterSeeingWetLimit = 0.8f;
     public int waterSeeingDepthLimit = 10;
 
@@ -30,16 +30,20 @@ public class MovingAgent : Agent {
     [System.NonSerialized]
     public bool isReturningToBase;
 
+    [System.NonSerialized]
+    public bool isInBase;
+
     void Awake() {
         agentMemory = new AgentMemory();
         moveData = new MoveData();
-        waterTilesFound = new List<TileMemory>();
+        waterTilesFound = new List<Tile>();
         currFuel = fuelCapacity;
         isReturningToBase = false;
+        isInBase = false;
     }
 
     void Start() {
-        StartCoroutine(playTurn());
+        //StartCoroutine(playTurn());
     }
 
     void Update() {
@@ -47,9 +51,10 @@ public class MovingAgent : Agent {
             idealRealWorldPosition, realWorldSpeedOfMoving * Time.deltaTime);
     }
 
-    public void setInitialPosition() {
+    public void initialize() {
         transform.localPosition = idealRealWorldPosition = Base.instance.currentTile.TileObject.transform.position;
         currentTile = Base.instance.currentTile;
+        StartCoroutine(playTurn());
     }
 
     private IEnumerator playTurn() {
@@ -78,7 +83,7 @@ public class MovingAgent : Agent {
         agentMemory.updateAgentMemory();
         List<Tile> waterTiles = Planet.getTilesInDepth(currentTile, waterSeeingDepthLimit, waterSeeingWetLimit);
         foreach (Tile tile in waterTiles) {
-
+            waterTilesFound.Add(tile);
         }
         Planet.instance.agentMoved(this);
 
@@ -121,12 +126,8 @@ public class MovingAgent : Agent {
             dirr = DirectionEnum.right;
         }
         else { //is in base
-            foreach (var pair in agentMemory.tileMemories) {
-                if (!Base.instance.agentMemory.tileMemories.ContainsKey(pair.Key)) {
-                    Base.instance.agentMemory.tileMemories.Add(pair.Key, pair.Value);
-                }
-            }
-            this.gameObject.SetActive(false);
+            isReturningToBase = false;
+            Base.instance.agentArrived(this);
             return;
         }
 
@@ -225,8 +226,9 @@ public class MovingAgent : Agent {
         idealRealWorldPosition = newTile.TileObject.transform.position;
     }
 
-    internal void resetAgent(Tile startingTile) {
+    internal void resetAgent() {
         agentMemory = new AgentMemory();
-        moveToTile(startingTile);
+        isInBase = false;
+        currFuel = fuelCapacity;
     }
 }

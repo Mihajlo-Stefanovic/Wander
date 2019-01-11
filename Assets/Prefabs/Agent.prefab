@@ -60,8 +60,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   visionDistance: 2
   paceOfMoving: 1
-  timesWeigth: 0.5
-  ordersWeight: 0.1
+  timesWeigth: 0.8
+  ordersWeight: 0.3
   waterSeeingWetLimit: 0.8
   waterSeeingDepthLimit: 15
   fuelCapacity: 50

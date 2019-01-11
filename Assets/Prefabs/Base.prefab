@@ -58,7 +58,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42a451ea4a862404eaf2ab8ecb03ceae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  position: {x: 0, y: 0, z: 0}
+  virtualCoordinates: {x: 0, y: 0, z: 0}
+  idealRealWorldPosition: {x: 0, y: 0, z: 0}
+  realWorldSpeedOfMoving: 2
+  isMoving: 0
   numOfAgents: 0
   agentPrefab: {fileID: 0}
 --- !u!1 &6548644569310411498

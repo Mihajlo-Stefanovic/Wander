@@ -60,4 +60,5 @@ MonoBehaviour:
     clrMuchWater: {r: 0.26953125, g: 0.09375, b: 0.015625, a: 1}
     clrWater: {r: 0.26953125, g: 0.09375, b: 0.015625, a: 1}
   virtualCenter: {x: 0, y: 0, z: 0}
-  speed: 0
+  speed: 5
+  wetnessToWaterLimit: 0.9

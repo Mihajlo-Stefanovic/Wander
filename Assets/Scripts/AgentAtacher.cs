@@ -16,23 +16,13 @@ public class AgentAtacher : MonoBehaviour {
             Planet.instance.currentRenderMode = RenderMode.Vision;
             Planet.instance.rendererAgent();
         }
+        else if (Input.GetKeyDown(KeyCode.C)) {
+            Planet.instance.detachAgent();
+        }
         else if (Input.GetKeyDown(KeyCode.X)) {
-            detachAgent();
+            cam.GetComponent<CinemachineVirtualCamera>().Follow = null;
+            Planet.instance.detachAgent();
         }
-    }
-
-    private void detachAgent() {
-        cam.GetComponent<CinemachineVirtualCamera>().Follow = null;
-
-        Planet.instance.currentAgentToRender = Base.instance;
-        Planet.instance.currentRenderMode = RenderMode.Free;
-
-        foreach (MovingAgent agent in Base.instance.agents) {
-            agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = true;
-        }
-
-        Planet.instance.planetVisualInfo.renderOnlyThisTiles(Planet.getTilesInDepth(
-            Base.instance.currentTile, Planet.instance.planetVisualInfo.normalVisionWidth));
     }
 
     private void attachAgent(Agent agentToAttach) {

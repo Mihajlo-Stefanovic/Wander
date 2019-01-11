@@ -4,12 +4,19 @@ using UnityEngine;
 public class Base : Agent {
     public static Base instance;
     [HideInInspector]
-    public Vector3Int position;
+    public Vector3Int virtualCoordinates;
+    [HideInInspector]
+    public Vector3 idealRealWorldPosition;
+    public float realWorldSpeedOfMoving;
+    [HideInInspector]
+    public bool isMoving;
 
     public int numOfAgents;
     public GameObject agentPrefab;
     [System.NonSerialized]
     public List<MovingAgent> agents;
+
+    private Dictionary<int, TileMemory> newAgentBroughtMemory;
 
     void Awake() {
         if (instance == null) {
@@ -21,8 +28,18 @@ public class Base : Agent {
 
         agents = new List<MovingAgent>();
         agentMemory = new AgentMemory();
+        newAgentBroughtMemory = new Dictionary<int, TileMemory>();
     }
 
+    void Update() {
+        if (isMoving && this.transform.position.Equals(idealRealWorldPosition)) {
+            baseArrived();
+        }
+        else if (isMoving && Input.GetKey(KeyCode.KeypadEnter)) {
+            transform.position = Vector3.MoveTowards(transform.position,
+            idealRealWorldPosition, realWorldSpeedOfMoving * Time.deltaTime);
+        }
+    }
     public void initialize(Tile staringTile) {
         setInitialPosition(staringTile);
         for (int i = 0; i < numOfAgents; i++) {
@@ -31,7 +48,7 @@ public class Base : Agent {
 
             MovingAgent agent = agentObj.GetComponent<MovingAgent>();
             agents.Add(agent);
-            agent.setInitialPosition();
+            agent.initialize();
         }
         generateOrders();
     }
@@ -39,14 +56,14 @@ public class Base : Agent {
     void setInitialPosition(Tile staringTile) {
         transform.position = Planet.instance.planetVisualInfo.getRealWorldCoordinates(staringTile);
         currentTile = staringTile;
-        position = staringTile.virtualCoordinates;
+        virtualCoordinates = staringTile.virtualCoordinates;
     }
 
     internal void reposition(Tile startingTile) {
         currentTile = startingTile;
 
         foreach (var agent in agents) {
-            agent.resetAgent(startingTile);
+            agent.resetAgent();
         }
     }
 
@@ -89,5 +106,76 @@ public class Base : Agent {
         v.x = (cos * tx) - (sin * ty);
         v.y = (sin * tx) + (cos * ty);
         return v;
+    }
+
+    public void agentArrived(MovingAgent movingAgent) {
+        foreach (var pair in movingAgent.agentMemory.tileMemories) {
+            if (!newAgentBroughtMemory.ContainsKey(pair.Key)) {
+                newAgentBroughtMemory.Add(pair.Key, pair.Value);
+            }
+        }
+        
+        foreach (var pair in movingAgent.agentMemory.tileMemories) {
+            if (!agentMemory.tileMemories.ContainsKey(pair.Key)) {
+                agentMemory.tileMemories.Add(pair.Key, pair.Value);
+            }
+        }
+
+        movingAgent.isInBase = true;
+        movingAgent.transform.parent = this.transform;
+        movingAgent.gameObject.SetActive(false);
+
+        bool allInBase = true;
+        foreach (MovingAgent agent in agents) {
+            if (!agent.isInBase) {
+                allInBase = false;
+            }
+        }
+
+        if (allInBase) {
+            baseMove();
+        }
+    }
+
+    private void baseMove() {
+        Tile tileToMoveTo = findBestTileForMove();
+        moveTo(tileToMoveTo);
+        isMoving = true;
+    }
+
+    private void moveTo(Tile tileToMoveTo) {
+        currentTile = tileToMoveTo;
+        idealRealWorldPosition = Planet.instance.planetVisualInfo.getRealWorldCoordinates(tileToMoveTo);
+    }
+
+    private void baseArrived() {
+        isMoving = false;
+        Planet.instance.generateMapFor(Planet.instance.planetGraphInfo.getTileWithPos(currentTile.virtualCoordinates));
+        Planet.instance.detachAgent();
+
+        foreach (MovingAgent agent in agents) {
+            agent.gameObject.SetActive(true);
+            agent.transform.parent = transform.parent;
+            agent.resetAgent();
+            agent.initialize();
+        }
+        newAgentBroughtMemory.Clear();
+    }
+
+    private Tile findBestTileForMove() {
+        Tile bestTile = currentTile;
+        int bestDistance = 0;
+
+        foreach (var pair in newAgentBroughtMemory) {
+            int distance = Mathf.Abs(currentTile.virtualCoordinates.x - pair.Value.tile.virtualCoordinates.x)
+                + Mathf.Abs(currentTile.virtualCoordinates.y - pair.Value.tile.virtualCoordinates.y)
+                + Mathf.Abs(currentTile.virtualCoordinates.z - pair.Value.tile.virtualCoordinates.z);
+            if (distance > bestDistance) {
+                bestDistance = distance;
+                bestTile = pair.Value.tile;
+            }
+            Debug.Log(bestTile.name + " " + bestDistance);
+        }
+        return bestTile;
     }
 }
