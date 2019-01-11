@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 114364023220654924}
   m_Layer: 0
   m_Name: Planet
-  m_TagString: Untagged
+  m_TagString: Agent
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
@@ -43,18 +43,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df5d808cca17ccb4b8c51daa8a643a50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  randomSeed: 0
   planetGraphInfo:
     planetGraphType: 1
-    graphWidth: 10
-    wetnessSpread: 1
     wetnessType: 0
-    oscilRange: 0.05
     wetFrequency: 1
+    wetnesDecreaseFarctor: 0
+    wetnesDecreaseFrequency: 0
+    oscilRange: 0.05
+    smudgeFactor: 0
   planetVisualInfo:
     tilePrefab: {fileID: 1887836494667948, guid: ef979dc91eeda944d9cb39812af62d8c,
       type: 3}
+    normalVisionWidth: 0
     clrNoWater: {r: 0.75390625, g: 0.265625, b: 0.0546875, a: 1}
+    clrMuchWater: {r: 0.26953125, g: 0.09375, b: 0.015625, a: 1}
     clrWater: {r: 0.26953125, g: 0.09375, b: 0.015625, a: 1}
-  currentAgentToRender: {fileID: 0}
-  currentRenderMode: 0
-  planetLandingPos: {x: 0, y: 0, z: 0}
+  virtualCenter: {x: 0, y: 0, z: 0}
+  speed: 0

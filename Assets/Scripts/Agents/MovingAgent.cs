@@ -1,24 +1,41 @@
 ﻿#undef AGENTMEMORY
 #undef CURRENTVISION
 #undef MOVING
-using System;
+#undef MOVEDATA
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class MovingAgent : Agent {
-    public int visionDistance = 1;
-    public float paceOfMoving = 1f;
+    public int visionDistance;
 
-    public Vector3Int currentAgentToBasePosition;
-
-    private Vector3Int destination;
-
+    public float paceOfMoving;
     private Vector3 idealRealWorldPosition;
     private float realWorldSpeedOfMoving = 10f;
+
+    public MoveData orders;
+    public MoveData moveData;
+
+    public float timesWeigth;
+    public float ordersWeight;
+
+    public List<TileMemory> waterTilesFound;
+    public float waterSeeingWetLimit = 0.8f;
+    public int waterSeeingDepthLimit = 10;
+
+    public int fuelCapacity;
+    [System.NonSerialized]
+    public int currFuel;
+
+    [System.NonSerialized]
+    public bool isReturningToBase;
+
     void Awake() {
-        agentMemory = new List<TileMemory>();
-        currentVision = new List<Tile>();
+        agentMemory = new AgentMemory();
+        moveData = new MoveData();
+        waterTilesFound = new List<TileMemory>();
+        currFuel = fuelCapacity;
+        isReturningToBase = false;
     }
 
     void Start() {
@@ -26,11 +43,13 @@ public class MovingAgent : Agent {
     }
 
     void Update() {
-        transform.position = Vector3.MoveTowards(transform.position, idealRealWorldPosition, realWorldSpeedOfMoving * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position,
+            idealRealWorldPosition, realWorldSpeedOfMoving * Time.deltaTime);
     }
+
     public void setInitialPosition() {
-        transform.localPosition = idealRealWorldPosition = currentAgentToBasePosition;
-        currentTile = Planet.instance.planetGraphInfo.currPlanetTiles[0]; //first tile
+        transform.localPosition = idealRealWorldPosition = Base.instance.currentTile.TileObject.transform.position;
+        currentTile = Base.instance.currentTile;
     }
 
     private IEnumerator playTurn() {
@@ -46,87 +65,156 @@ public class MovingAgent : Agent {
 #endif
         yield return new WaitForSeconds(paceOfMoving);
 
-        Move();
-        updateCurentVision();
-        updateAgentMemory();
+        isReturningToBase = (currFuel <= fuelCapacity / 2) ? true : false; //TODO change to base offset
+        if (!isReturningToBase) {
+            moveToNew();
+        }
+        else {
+            returnToBase();
+        }
+
+        agentMemory.updateCurentVision(currentTile, visionDistance);
+        agentMemory.updateCurentVision(currentTile, waterSeeingDepthLimit, waterSeeingWetLimit, false);
+        agentMemory.updateAgentMemory();
+        List<Tile> waterTiles = Planet.getTilesInDepth(currentTile, waterSeeingDepthLimit, waterSeeingWetLimit);
+        foreach (Tile tile in waterTiles) {
+
+        }
         Planet.instance.agentMoved(this);
 
-        StartCoroutine(playTurn());
+        if(gameObject.activeSelf)
+            StartCoroutine(playTurn());
     }
 
-    private void updateAgentMemory() {
+    private void returnToBase() {
+        int up; int down; int right; int left;
 
-        List<Tile> currentVision = new List<Tile>();
-        addPlanetTilesWithDFS(currentVision);
-
-        foreach (Tile tile in currentVision) {
-            TileMemory tileMemory = new TileMemory(tile);
-            if (!agentMemory.Contains(tileMemory)) {
-                agentMemory.Add(tileMemory);
-            }
+        if (moveData.numOfDirMoves.TryGetValue(DirectionEnum.up, out up)) { }
+        else {
+            up = 0;
         }
-    }
-
-    private void updateCurentVision() {
-        currentVision.Clear();
-
-        addPlanetTilesWithDFS(currentVision);
-
-        foreach (Tile tile in currentVision) {
-            TileMemory tileMemory = new TileMemory(tile);
-            if (!agentMemory.Contains(tileMemory)) {
-                agentMemory.Add(tileMemory);
-            }
+        if (moveData.numOfDirMoves.TryGetValue(DirectionEnum.down, out down)) { }
+        else {
+            down = 0;
         }
-    }
+        if (moveData.numOfDirMoves.TryGetValue(DirectionEnum.right, out right)) { }
+        else {
+            right = 0;
+        }
+        if (moveData.numOfDirMoves.TryGetValue(DirectionEnum.left, out left)) { }
+        else {
+            left = 0;
+        }
 
-    private void addPlanetTilesWithDFS(List<Tile> listToAdd) {
-        Stack<KeyValuePair<Tile, int>> tilesToAdd = new Stack<KeyValuePair<Tile, int>>();
-
-        tilesToAdd.Push(new KeyValuePair<Tile, int>(currentTile, 0));
-
-        while (tilesToAdd.Count != 0) {
-            KeyValuePair<Tile, int> currTileAndDepth = tilesToAdd.Pop();
-
-            listToAdd.Add(currTileAndDepth.Key);
-
-            if (currTileAndDepth.Value < visionDistance) {
-                foreach (Tile neighour in currTileAndDepth.Key.Neighbours) {
-                    if (!listToAdd.Contains(neighour)) {
-                        tilesToAdd.Push(new KeyValuePair<Tile, int>(neighour, currTileAndDepth.Value + 1));
-                    }
+        int vertical = up - down; int horizontal = right - left;
+        DirectionEnum dirr;
+        if (vertical > 0) {
+            dirr = DirectionEnum.down;
+        }
+        else if (vertical < 0) {
+            dirr = DirectionEnum.up;
+        }
+        else if (horizontal > 0) {
+            dirr = DirectionEnum.left;
+        }
+        else if (horizontal < 0) {
+            dirr = DirectionEnum.right;
+        }
+        else { //is in base
+            foreach (var pair in agentMemory.tileMemories) {
+                if (!Base.instance.agentMemory.tileMemories.ContainsKey(pair.Key)) {
+                    Base.instance.agentMemory.tileMemories.Add(pair.Key, pair.Value);
                 }
             }
+            this.gameObject.SetActive(false);
+            return;
+        }
 
+        Tile newTile = currentTile.getNeighbourWDirr(dirr);
+        currFuel--;
+        moveData.addMove(dirr);
+
+        if (newTile.TileObject != null) {
+            moveToTile(newTile);
         }
     }
 
-    private void Move() {
-        if (currentTile.Neighbours.Count==0) {
+    private void moveToNew() {
+        if (currentTile.Neighbours.Count == 0) {
 #if MOVING
             Debug.Log(currentTile.name + " neighbours.Count = 0");
 #endif
             return;
         }
-        Tile newTile = currentTile.Neighbours[0];
+
+        TileMemory tileMemoryResoult;
+        int randomNeighbour = Random.Range(0, currentTile.Neighbours.Count);
+        if (agentMemory.tileMemories.TryGetValue(currentTile.Neighbours[randomNeighbour].GetHashCode(), out tileMemoryResoult)) {
+            ;
+        }
+        else {
+            tileMemoryResoult = new TileMemory(currentTile.Neighbours[randomNeighbour]);
+        }
 
 #if MOVING
         Debug.Log("curr" + currentTile.name);
 #endif
-        foreach (Tile tile in currentTile.Neighbours) {
+        foreach (Tile tile in currentTile.Neighbours) { //TODO : change in vision tiles
 #if MOVING
             Debug.Log(tile.name);
 #endif
-            //TODO DECIDE WHERE TO GO
-            //TileMemory tileMemory = agentMemory.Find(new TileMemory(tile));
-            if (tile.Wetness > newTile.Wetness) {
-                newTile = tile;
+            TileMemory tileMemory;
+            if (agentMemory.tileMemories.TryGetValue(tile.GetHashCode(), out tileMemory)) {
+                ;
+            }
+            else {
+                tileMemory = new TileMemory(tile);
+            }
+
+            if ((shouldMoveTo(tileMemoryResoult) <
+                shouldMoveTo(tileMemory))) {
+
+                tileMemoryResoult = tileMemory;
             }
         }
 
-        if (newTile.TileObject != null) {
-            moveToTile(newTile);
+        currFuel -= 1;
+        moveData.addMove(tileMemoryResoult.tile.dirFrom(currentTile));
+#if MOVEDATA
+        Debug.Log(moveData.ToString());
+#endif
+        tileMemoryResoult.visitedTimes += 1;
+        if (tileMemoryResoult.tile.TileObject != null) {
+            moveToTile(tileMemoryResoult.tile);
         }
+    }
+
+    private float shouldMoveTo(TileMemory tileMemory) {
+        if (tileMemory.needToVisit) {
+            return tileMemory.tile.Wetness - tileMemory.visitedTimes * timesWeigth +
+            notObeyingOrders(tileMemory.tile.dirFrom(currentTile)) * ordersWeight;
+        }
+        return int.MinValue;
+    }
+
+    private float notObeyingOrders(DirectionEnum dirr) {
+        float order;
+        if (orders.dirPercent.TryGetValue(dirr, out order)) {
+            ;
+        }
+        else {
+            order = 0;
+        }
+
+        float currData;
+        if (moveData.dirPercent.TryGetValue(dirr, out currData)) {
+            ;
+        }
+        else {
+            currData = 0;
+        }
+
+        return -Mathf.Abs(order - currData);
     }
 
     public void moveToTile(Tile newTile) {
@@ -137,8 +225,8 @@ public class MovingAgent : Agent {
         idealRealWorldPosition = newTile.TileObject.transform.position;
     }
 
-    internal void reset(Tile startingTile) {
-        agentMemory = new List<TileMemory>();
+    internal void resetAgent(Tile startingTile) {
+        agentMemory = new AgentMemory();
         moveToTile(startingTile);
     }
 }

@@ -1,20 +1,22 @@
 ﻿using Cinemachine;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class AgentAtacher : MonoBehaviour {
     public GameObject cam;
-	void Update () {
-        if(Input.GetMouseButtonDown(0)) {
+    void Update() {
+        if (Input.GetMouseButtonDown(0)) {
             attachAgent(getClickedAgent());
         }
 
-        if (Input.GetKeyDown(KeyCode.M))
+        if (Input.GetKeyDown(KeyCode.M)) {
             Planet.instance.currentRenderMode = RenderMode.Memory;
-        else if (Input.GetKeyDown(KeyCode.V))
+            Planet.instance.rendererAgent();
+        }
+        else if (Input.GetKeyDown(KeyCode.V)) {
             Planet.instance.currentRenderMode = RenderMode.Vision;
-        else if (Input.GetKeyDown(KeyCode.X)) { 
+            Planet.instance.rendererAgent();
+        }
+        else if (Input.GetKeyDown(KeyCode.X)) {
             detachAgent();
         }
     }
@@ -25,7 +27,7 @@ public class AgentAtacher : MonoBehaviour {
         Planet.instance.currentAgentToRender = Base.instance;
         Planet.instance.currentRenderMode = RenderMode.Free;
 
-        foreach (Agent agent in Base.instance.agents) {
+        foreach (MovingAgent agent in Base.instance.agents) {
             agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = true;
         }
 
@@ -33,27 +35,28 @@ public class AgentAtacher : MonoBehaviour {
             Base.instance.currentTile, Planet.instance.planetVisualInfo.normalVisionWidth));
     }
 
-    private void attachAgent(MovingAgent agentToAttach) {
-        if (agentToAttach!=null) {
+    private void attachAgent(Agent agentToAttach) {
+        if (agentToAttach != null) {
             cam.GetComponent<CinemachineVirtualCamera>().Follow = agentToAttach.gameObject.transform;
 
-            foreach (MovingAgent agent in Base.instance.agents) {
-                if (agent != agentToAttach)
+            foreach (var agent in Base.instance.agents) {
+                if (agent != agentToAttach) {
                     agent.gameObject.GetComponentInChildren<SpriteRenderer>().enabled = false;
+                }
             }
             Planet.instance.currentAgentToRender = agentToAttach;
         }
     }
 
-    private static MovingAgent getClickedAgent() {
+    private static Agent getClickedAgent() {
         Ray touchRay = Camera.main.ScreenPointToRay(Input.mousePosition);
 
         RaycastHit[] hits = Physics.RaycastAll(touchRay);
 
         foreach (RaycastHit hit in hits) {
-            if (hit.collider.gameObject.name == "Agent") {
+            if (hit.collider.gameObject.tag == "Agent") {
                 var agentObj = hit.collider.gameObject;
-                return agentObj.GetComponent<MovingAgent>();
+                return agentObj.GetComponent<Agent>();
             }
         }
         return null;

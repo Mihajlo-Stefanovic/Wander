@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Tile {
@@ -98,7 +99,7 @@ public class Tile {
                 int offX = Mathf.Abs(this.virtualCoordinates.x - tile.virtualCoordinates.x);
                 int offY = Mathf.Abs(this.virtualCoordinates.y - tile.virtualCoordinates.y);
                 if (offX <= 1 && offY <= 1) {
-                    if (offX != offY){ //removes diagonal and center
+                    if (offX != offY) { //removes diagonal and center
                         return true;
                     }
                 }
@@ -108,6 +109,20 @@ public class Tile {
                 break;
         }
         return false;
+    }
+
+    internal Tile getNeighbourWDirr(DirectionEnum dirr) {
+        foreach(Tile tile in neighbours) {
+            if (tile.dirFrom(this) == dirr)
+                return tile;
+        }
+        Debug.Log("No such neighbour for " + name + " " + dirr);
+        return null;
+    }
+
+    public DirectionEnum dirFrom(Tile parentTile) {
+        Vector3Int diff = this.virtualCoordinates - parentTile.virtualCoordinates;
+        return Direction.directions[diff];
     }
 
     public void addNeighoursConnection(Tile tile) {
@@ -124,8 +139,16 @@ public class Tile {
         }
     }
 
-    public override int GetHashCode() {
+    public override int GetHashCode() { //HACKED to all be unique!
         string s = virtualCoordinates.x + " " + virtualCoordinates.y + " " + virtualCoordinates.z;
         return s.GetHashCode();
+    }
+
+    public override bool Equals(object obj) {
+        if (obj.GetType() == typeof(Tile)) {
+            Tile oth = (Tile)obj;
+            return virtualCoordinates.Equals(oth.virtualCoordinates);
+        }
+        return false;
     }
 }

@@ -15,15 +15,18 @@ public class CameraMove : MonoBehaviour
     }
     void Update() {
         if (Input.GetMouseButton(0)) {
-            transform.position -= new Vector3(Input.GetAxis("Mouse X"), 0, Input.GetAxis("Mouse Y")) * moveSensitivity *Time.deltaTime;
+            transform.position -= new Vector3(Input.GetAxis("Mouse X"), 0, Input.GetAxis("Mouse Y")) * moveSensitivity 
+                *Time.deltaTime / (Time.timeScale + 1);
         }
 
         var d = Input.GetAxis("Mouse ScrollWheel");
         if (d > 0f) {
-            camera.m_Lens.OrthographicSize -= zoomSensitivity * Time.deltaTime;
+            camera.m_Lens.OrthographicSize -= zoomSensitivity * Time.deltaTime 
+                / (Time.timeScale+1);
         }
         else if (d < 0f) {
-            camera.m_Lens.OrthographicSize += zoomSensitivity * Time.deltaTime;
+            camera.m_Lens.OrthographicSize += zoomSensitivity * Time.deltaTime
+                / (Time.timeScale + 1); ;
         }
     }
 }

@@ -18,7 +18,7 @@ public class PlanetGraphInfo {
     public float wetnesDecreaseFarctor;
     public int wetnesDecreaseFrequency;
     public float oscilRange;
-    public int wetnessSpread;
+    public int smudgeFactor;
     public int wetImpact {
         get {
             return (int)Mathf.Ceil((1 / wetnesDecreaseFarctor) * wetnesDecreaseFrequency);
@@ -145,7 +145,7 @@ public class PlanetGraphInfo {
         }
 
         //spreading undirect wetness, tl;dr smudge
-        for (int i = 0; i < wetnessSpread; i++) {
+        for (int i = 0; i < smudgeFactor; i++) {
             foreach (Tile tile in tiles) {
                 //if ((int)tile.wetness != 1) { //not changing watter tiles
                 float wetness = 0;

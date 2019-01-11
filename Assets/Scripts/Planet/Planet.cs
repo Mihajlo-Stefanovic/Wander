@@ -19,6 +19,11 @@ public class Planet : MonoBehaviour {
     [Header("For generation")]
     public Vector3Int virtualCenter; //hack for generating
 
+    [Range(0, 20)]
+    public int speed;
+
+    public float wetnessToWaterLimit = 0.9f;
+
     void Awake() {
         if (instance == null) {
             instance = this;
@@ -34,15 +39,19 @@ public class Planet : MonoBehaviour {
 
     void Start() {
         planetVisualInfo.instantiateVisuals(graphCenterTile);
+        Base.instance.initialize(graphCenterTile);
     }
 
+    void Update() {
+        Time.timeScale = speed;
+    }
     public void agentMoved(Agent agent) {
         if (agent == currentAgentToRender) {
             rendererAgent();
         }
     }
 
-    private void rendererAgent() {
+    public void rendererAgent() {
         if (currentRenderMode == RenderMode.Vision) {
             planetVisualInfo.renderCurrentVisionForAgent(currentAgentToRender);
         }
@@ -51,7 +60,7 @@ public class Planet : MonoBehaviour {
         }
     }
 
-    public static List<Tile> getTilesInDepth(Tile tile, int depth) {
+    public static List<Tile> getTilesInDepth(Tile tile, int depth, float wetnessLimit = -1) {
         Queue<KeyValuePair<Tile, int>> tilesToVisit = new Queue<KeyValuePair<Tile, int>>();
         List<Tile> visitedTiles = new List<Tile>();
 
@@ -61,7 +70,8 @@ public class Planet : MonoBehaviour {
 
             KeyValuePair<Tile, int> currTileAndDepth = tilesToVisit.Dequeue();
 
-            if (!visitedTiles.Contains(currTileAndDepth.Key) && currTileAndDepth.Value<=depth) {
+            if (!visitedTiles.Contains(currTileAndDepth.Key) && currTileAndDepth.Value <= depth
+                && currTileAndDepth.Key.Wetness > wetnessLimit) {
 
                 visitedTiles.Add(currTileAndDepth.Key);
 

@@ -38,29 +38,21 @@ public class PlanetVisualInfo {
         var sr = tile.GetComponentInChildren<SpriteRenderer>();
         sr.color = Color.Lerp(clrNoWater, clrMuchWater, wetness);
 
-        if (wetness >= 0.9f) {
+        if (wetness >= Planet.instance.wetnessToWaterLimit) {
             sr.color = clrWater;
         }
     }
 
     public void renderCurrentVisionForAgent(Agent agent) {
         if (agent != null) {
-            renderOnlyThisTiles(agent.currentVision);
+            renderOnlyThisTiles(agent.agentMemory.getTilesFromMemoryTiles(agent.agentMemory.currentVision));
         }
     }
 
     public void renderMemoryForAgent(Agent agent) {
         if (agent != null) {
-            renderOnlyThisTiles(getTilesFromMemory(agent.agentMemory));
+            renderOnlyThisTiles(agent.agentMemory.getTilesFromMemoryTiles(agent.agentMemory.tileMemories));
         }
-    }
-
-    private List<Tile> getTilesFromMemory(List<TileMemory> agentMemory) {
-        List<Tile> tiles = new List<Tile>();
-        foreach (TileMemory tileMemory in agentMemory) {
-            tiles.Add(tileMemory.tile);
-        }
-        return tiles;
     }
 
     public void renderOnlyThisTiles(List<Tile> tilesToRender) {
