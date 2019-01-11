@@ -660,12 +660,12 @@ PrefabInstance:
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
       propertyPath: randomSeed
-      value: 69
+      value: 42
       objectReference: {fileID: 0}
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}
       propertyPath: planetVisualInfo.normalVisionWidth
-      value: 20
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 114364023220654924, guid: ae02af7323fe88d4e94d4636b219b325,
         type: 3}

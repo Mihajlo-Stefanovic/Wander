@@ -23,7 +23,7 @@ public class Planet : MonoBehaviour {
     [Range(0, 20)]
     public int speed;
 
-    public float wetnessToWaterLimit = 0.9f;
+    public float wetnessToWaterLimit = 0.99f;
 
     void Awake() {
         if (instance == null) {
@@ -33,7 +33,7 @@ public class Planet : MonoBehaviour {
             Destroy(this);
         }
 
-#if (UNITY_EDITOR)
+#if !(UNITY_EDITOR)
         randomSeed = Random.Range(0, int.MaxValue);
 #endif
         currentRenderMode = RenderMode.Free;

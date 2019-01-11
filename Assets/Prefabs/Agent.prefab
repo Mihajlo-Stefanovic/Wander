@@ -64,7 +64,7 @@ MonoBehaviour:
   ordersWeight: 0.3
   waterSeeingWetLimit: 0.8
   waterSeeingDepthLimit: 15
-  fuelCapacity: 50
+  fuelCapacity: 55
 --- !u!1 &6380552520773213220
 GameObject:
   m_ObjectHideFlags: 0

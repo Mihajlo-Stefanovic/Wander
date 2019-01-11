@@ -228,6 +228,7 @@ public class MovingAgent : Agent {
 
     internal void resetAgent() {
         agentMemory = new AgentMemory();
+        waterTilesFound = new List<Tile>();
         isInBase = false;
         currFuel = fuelCapacity;
     }

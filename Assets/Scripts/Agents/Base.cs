@@ -150,6 +150,7 @@ public class Base : Agent {
 
     private void baseArrived() {
         isMoving = false;
+        agentMemory = new AgentMemory(); //TODO : Make support for continnual adding
         Planet.instance.generateMapFor(Planet.instance.planetGraphInfo.getTileWithPos(currentTile.virtualCoordinates));
         Planet.instance.detachAgent();
 
@@ -174,7 +175,7 @@ public class Base : Agent {
                 bestDistance = distance;
                 bestTile = pair.Value.tile;
             }
-            Debug.Log(bestTile.name + " " + bestDistance);
+            //Debug.Log(bestTile.name + " " + bestDistance);
         }
         return bestTile;
     }
